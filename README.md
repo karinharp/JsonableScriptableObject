@@ -7,7 +7,7 @@ Json <=> ScriptableObject 可能な ScriptableObject基本クラス + Editor拡�
 
 依存先のPackageを先に入れてください。
 
-- EditorUtils.unitypackage
+- [EditorUtils.unitypackage](https://github.com/karinharp/EditorUtils/releases)
 
 #### Step.1
 
@@ -74,15 +74,14 @@ public class SampleJSOInspector : JsonableScriptableObjectInspector
 		PutJsonFile(JsonUtility.ToJson(jso, false));
     }
     
-    public override void OnInspectorGUI()
-    {
+    // 独自にインスペクターを組むときは、こんな感じでOverrideする。
+    /* 
+    protected override void DrawInspector(){
 		var jso = target as SampleJSO;
-
-		base.OnInspectorGUI();
-	
 		DrawSimpleIntField(jso,  "id",   ref jso.objId);
 		DrawSimpleTextField(jso, "name", ref jso.objName);
-    }    
+    }
+    */    	
 }
 }
 ```

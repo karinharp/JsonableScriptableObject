@@ -9,7 +9,7 @@ namespace am
 {
 
 [CustomEditor(typeof(JsonableScriptableObject))]
-public class JsonableScriptableObjectInspector : Editor
+public class JsonableScriptableObjectInspector : Editor 
 {
     protected JsonableScriptableObjectConfig m_config;
     
@@ -31,12 +31,15 @@ public class JsonableScriptableObjectInspector : Editor
 	m_config = AssetDatabase.LoadAssetAtPath<JsonableScriptableObjectConfig>(path);
     }
 
+    protected virtual void DrawDefault(){
+	DrawDefaultInspector(); 
+    }
     
     public override void OnInspectorGUI()
     {
 	var jso = target as JsonableScriptableObject;
 	DrawConvertMenu(jso);
-	//DrawDefaultInspector();
+	DrawDefault();
     }
 
     /*=================================================================================================*/

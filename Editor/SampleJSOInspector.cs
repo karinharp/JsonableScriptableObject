@@ -18,15 +18,14 @@ public class SampleJSOInspector : JsonableScriptableObjectInspector
 	var jso  = target as SampleJSO;
 	PutJsonFile(JsonUtility.ToJson(jso, false));
     }
-    
-    public override void OnInspectorGUI()
-    {
-	var jso = target as SampleJSO;
 
-	base.OnInspectorGUI();
-	
+    // 独自にインスペクターを組むときは、こんな感じでOverrideする。
+    /* 
+    protected override void DrawInspector(){
+	var jso = target as SampleJSO;
 	DrawSimpleIntField(jso,  "id",   ref jso.objId);
 	DrawSimpleTextField(jso, "name", ref jso.objName);
-    }    
+    }
+    */    
 }
 }    
