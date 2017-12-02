@@ -29,3 +29,9 @@ public class SampleJSOInspector : JsonableScriptableObjectInspector
     */    
 }
 }    
+
+/*
+ * Local variables:
+ * compile-command: make -C../ deploy
+ * End:
+ */

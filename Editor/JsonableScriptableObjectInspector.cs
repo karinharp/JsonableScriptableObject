@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System;
 using System.IO;
 using System.Text;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace am
 {
@@ -12,23 +14,40 @@ namespace am
 public class JsonableScriptableObjectInspector : Editor 
 {
     protected JsonableScriptableObjectConfig m_config;
-    
+    protected string []                      m_pathInfoList;
+    protected int                            m_pathInfoTarget;
+    protected Stack<Action>                  m_callbackQueue;
+    protected bool                           m_isTermPollCallbackQueue;
+
     protected virtual void OnEnable()
     {
-	//var so = target as JsonableScriptableObject;
-	var guids = UnityEditor.AssetDatabase.FindAssets("t:JsonableScriptableObjectConfig");
-	if (guids.Length == 0) {
-	    //throw new System.IO.FileNotFoundException ("JsonableScriptableObjectConfig does not found");
-	    var dir = "Assets/AmPlugins/Settings/";
-	    if(!Directory.Exists(dir)){ Directory.CreateDirectory(dir); }
-	    var asset = CreateInstance<JsonableScriptableObjectConfig>();
-	    AssetDatabase.CreateAsset
-		(asset, "Assets/AmPlugins/Settings/JsonableScriptableObjectConfig.asset");
-	    AssetDatabase.Refresh();
-	    guids = UnityEditor.AssetDatabase.FindAssets("t:JsonableScriptableObjectConfig");
+	//var jso = target as JsonableScriptableObject;
+	m_callbackQueue   = new Stack<Action>();
+	m_isTermPollCallbackQueue = false;
+
+	// Load JsonableScriptableObject Editor Settings
+	{	    
+	    var guids = UnityEditor.AssetDatabase.FindAssets("t:JsonableScriptableObjectConfig");
+	    if (guids.Length == 0) {
+		//throw new System.IO.FileNotFoundException ("JsonableScriptableObjectConfig does not found");
+		var dir = "Assets/AmPlugins/Settings/";
+		if(!Directory.Exists(dir)){ Directory.CreateDirectory(dir); }
+		var asset = CreateInstance<JsonableScriptableObjectConfig>();
+		AssetDatabase.CreateAsset
+		    (asset, "Assets/AmPlugins/Settings/JsonableScriptableObjectConfig.asset");
+		AssetDatabase.Refresh();
+		guids = UnityEditor.AssetDatabase.FindAssets("t:JsonableScriptableObjectConfig");
+	    }
+	    var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+	    m_config = AssetDatabase.LoadAssetAtPath<JsonableScriptableObjectConfig>(path);
 	}
-	var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-	m_config = AssetDatabase.LoadAssetAtPath<JsonableScriptableObjectConfig>(path);
+
+	// Cache JsonableScriptableObject pathInfoList
+	// @todo フォルダの命名規則に合わせて、デフォルトのTargetをサーチしてセットする
+	{
+	    m_pathInfoList   = m_config.selectableList;
+	    m_pathInfoTarget = 0;	    
+	}
     }
 
     protected virtual void DrawDefault(){
@@ -42,12 +61,17 @@ public class JsonableScriptableObjectInspector : Editor
 	DrawDefault();
     }
 
+    void PollCallbackQueue(){
+	while(m_callbackQueue.Count > 0){ (m_callbackQueue.Pop())(); }
+	if(! m_isTermPollCallbackQueue){ EditorApplication.delayCall += PollCallbackQueue; }
+    }
+
     /*=================================================================================================*/
 
     protected string GetJsonFile(){
 	string json = "";
 	var jso  = target as JsonableScriptableObject;
-	var path = m_config.jsonDirPath + "/" + jso.name + ".json";
+	var path = m_config.pathInfoList[m_pathInfoTarget].workspacePath + "/" + jso.name + ".json";
 	if(! File.Exists(path)){ Debug.Log(path + " Not Found !"); }
 	else {	    
 	    using(var sr = new StreamReader(path, Encoding.GetEncoding("utf-8"))){ json = sr.ReadToEnd(); }
@@ -56,15 +80,34 @@ public class JsonableScriptableObjectInspector : Editor
     }
     protected void PutJsonFile(string json){
 	var jso  = target as JsonableScriptableObject;
-	var path = m_config.jsonDirPath + "/" + jso.name + ".json";
+	var path = m_config.pathInfoList[m_pathInfoTarget].workspacePath + "/" + jso.name + ".json";
 	using(var sw = new StreamWriter(path, false, Encoding.GetEncoding("utf-8"))){ sw.Write(json); }
+    }
+    protected void CopyFromS3(Action fCompleteCallback){
+	var jso  = target as JsonableScriptableObject;
+	var info = m_config.pathInfoList[m_pathInfoTarget];
+	var dst  = info.workspacePath + "/" + jso.name + ".json";
+	var src  = "s3://" + info.s3Bucket + info.s3Folder + "/" + jso.name + ".json";
+	S3Command.Put(m_config.s3CliSetting, src, dst, fCompleteCallback);
+    }
+    protected void CopyToS3(Action fCompleteCallback){
+	var jso  = target as JsonableScriptableObject;
+	var info = m_config.pathInfoList[m_pathInfoTarget];
+	var src  = info.workspacePath + "/" + jso.name + ".json";
+	var dst  = "s3://" + info.s3Bucket + info.s3Folder + "/" + jso.name + ".json";
+	S3Command.Put(m_config.s3CliSetting, src, dst, fCompleteCallback);
     }
     protected virtual void ImportFromJson(){}    
     protected virtual void ExportToJson(){}
 
     protected virtual void DrawConvertMenu(JsonableScriptableObject jso){
-	DrawSimpleLabelField("JsonDirPath : ", m_config.jsonDirPath);
-	DrawSimpleLabelField("JsonName : ",    jso.name);
+
+	m_pathInfoTarget = EditorGUILayout.Popup("Target", m_pathInfoTarget, m_pathInfoList);
+	
+	var info = m_config.pathInfoList[m_pathInfoTarget];
+	DrawSimpleLabelField("JsonDirPath : ", info.workspacePath);
+	DrawSimpleLabelField("S3 Path : ",     "s3://" + info.s3Bucket + info.s3Folder);
+	DrawSimpleLabelField("JsonName : ",    jso.name + ".json");
 	EditorGUILayout.BeginHorizontal();
 	{
 	    if(GUILayout.Button("Import", EditorStyles.miniButton)){
@@ -76,6 +119,31 @@ public class JsonableScriptableObjectInspector : Editor
 		ExportToJson();
 		//EditorUtility.SetDirty(jso);
 		EditorUtility.DisplayDialog("JsonExport", "Complete", "OK");			
+	    }
+	    if(GUILayout.Button("S3 Load", EditorStyles.miniButton)){
+		CopyFromS3(() => 
+			{ 
+			    m_callbackQueue.Push(() => { 
+				    ImportFromJson();
+				    EditorUtility.SetDirty(jso);
+				    EditorUtility.DisplayDialog("S3 Load", "Complete", "OK"); 
+				    m_isTermPollCallbackQueue = true;
+				}); 
+			});
+		m_isTermPollCallbackQueue = false;
+		EditorApplication.delayCall += PollCallbackQueue;
+	    }
+	    if(GUILayout.Button("S3 Save", EditorStyles.miniButton)){
+		ExportToJson(); // 一応
+		CopyToS3(() => 
+			{ 
+			    m_callbackQueue.Push(() => { 
+				    EditorUtility.DisplayDialog("S3 Save", "Complete", "OK"); 
+				    m_isTermPollCallbackQueue = true;
+				}); 
+			});
+		m_isTermPollCallbackQueue = false;
+		EditorApplication.delayCall += PollCallbackQueue;
 	    }
 	}
 	EditorGUILayout.EndHorizontal();
@@ -131,3 +199,9 @@ public class JsonableScriptableObjectInspector : Editor
     
 }
 }    
+
+/*
+ * Local variables:
+ * compile-command: make -C../ deploy
+ * End:
+ */

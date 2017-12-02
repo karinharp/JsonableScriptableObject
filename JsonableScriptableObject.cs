@@ -13,3 +13,9 @@ public class JsonableScriptableObject : ScriptableObject
 
 }
 }
+
+/*
+ * Local variables:
+ * compile-command: make -C./ deploy
+ * End:
+ */

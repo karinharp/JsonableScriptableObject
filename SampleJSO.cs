@@ -10,8 +10,23 @@ namespace am
 public class SampleJSO : JsonableScriptableObject
 {
 
-    public int    objId;
-    public string objName;
+    public int    castId;
+    public string castName;
+
+    [Range(0,200)]
+    public int hp;
+    [Range(0,300)]
+    public float speed;
+    [Range(1,100)]
+    public int ssPower; 
+    [Range(1,200)]
+    public int dsPower; 
 
 }
 }
+
+/*
+ * Local variables:
+ * compile-command: make -C./ deploy
+ * End:
+ */
