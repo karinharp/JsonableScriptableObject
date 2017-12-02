@@ -1,25 +1,27 @@
-Json <=> ScriptableObject 可能な ScriptableObject基本クラス + Editor拡張
+Json <=> ScriptableObject <=> S3 Object 可能な ScriptableObject基本クラス + Editor拡張
 ========================================================================
 
-![](https://user-images.githubusercontent.com/1039507/33340662-1238f028-d4c0-11e7-95ae-f080fb3e3455.png)
+![](https://user-images.githubusercontent.com/1039507/33512221-d94f55a2-d76e-11e7-8461-3a0762c9790e.png)
 
 ### How To Use
 
-#### Step.0
+#### Step.1
 
 依存先のPackageを先に入れてください。
 
 - [EditorUtils.unitypackage](https://github.com/karinharp/EditorUtils/releases)
 
-#### Step.1
+#### Step.2
 
 JsonableScriptableObject を継承した ScriptableObject を適当に作って、Inspector表示させると、
 
 /Assets/AmPlugins/Settins/JsonableScriptableObjectConfig.asset
 
-が生成されるので、そこに、Import/Export先となるディレクトリを設定
+が生成されるので、そこに、Import/Export先となるディレクトリを設定。<br />
+S3を使う場合はS3の設定とAWS CLIの設定も合わせて。
 
-#### Step.2
+
+#### Step.3
 
 あとは、
 
