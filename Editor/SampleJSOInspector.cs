@@ -21,7 +21,7 @@ public class SampleJSOInspector : JsonableScriptableObjectInspector
 
     // 独自にインスペクターを組むときは、こんな感じでOverrideする。
     /* 
-    protected override void DrawInspector(){
+    protected override void DrawCustomInspector(){
 	var jso = target as SampleJSO;
 	DrawSimpleIntField(jso,  "id",   ref jso.objId);
 	DrawSimpleTextField(jso, "name", ref jso.objName);
@@ -32,6 +32,6 @@ public class SampleJSOInspector : JsonableScriptableObjectInspector
 
 /*
  * Local variables:
- * compile-command: make -C../ deploy
+ * compile-command: "make -C../ deploy"
  * End:
  */

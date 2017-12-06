@@ -36,6 +36,6 @@ public class S3Command
 
 /*
  * Local variables:
- * compile-command: make -C../ deploy
+ * compile-command: "make -C../ deploy"
  * End:
  */

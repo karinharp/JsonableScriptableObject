@@ -50,7 +50,7 @@ public class JsonableScriptableObjectInspector : Editor
 	}
     }
 
-    protected virtual void DrawDefault(){
+    protected virtual void DrawCustomInspector(){
 	DrawDefaultInspector(); 
     }
     
@@ -58,7 +58,7 @@ public class JsonableScriptableObjectInspector : Editor
     {
 	var jso = target as JsonableScriptableObject;
 	DrawConvertMenu(jso);
-	DrawDefault();
+	DrawCustomInspector();
     }
 
     void PollCallbackQueue(){
@@ -202,6 +202,6 @@ public class JsonableScriptableObjectInspector : Editor
 
 /*
  * Local variables:
- * compile-command: make -C../ deploy
+ * compile-command: "make -C../ deploy"
  * End:
  */

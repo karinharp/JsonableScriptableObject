@@ -27,6 +27,6 @@ public class SampleJSO : JsonableScriptableObject
 
 /*
  * Local variables:
- * compile-command: make -C./ deploy
+ * compile-command: "make -C./ deploy"
  * End:
  */
