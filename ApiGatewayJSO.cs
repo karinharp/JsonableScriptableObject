@@ -31,6 +31,16 @@ public class ApiGatewayJSO : JsonableScriptableObject
 	get { return apiList.FirstOrDefault(api => api.key == key); }
     }
 
+    /*
+     * 特定条件下で、OnInspectorGUIがシリアライズ定義したメンバーの初期化前に触ってしまう問題が稀に起こる
+     * ハマると、生成までいかずに一生そこでとまってしまうのだ...
+     * Awake()で生成して逃げる。そのうちまともに対処しよう。。
+     */
+    public void Awake(){
+	apiList = new List<ApiGatewayInfo>();	
+	infoApi = new ApiGatewayInfo(); 
+    }
+
     // テスト用
     public void Dump(){
 	foreach(var api in apiList){
