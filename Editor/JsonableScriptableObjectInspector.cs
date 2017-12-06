@@ -102,8 +102,28 @@ public class JsonableScriptableObjectInspector : Editor
 
     protected virtual void DrawConvertMenu(JsonableScriptableObject jso){
 
-	m_pathInfoTarget = EditorGUILayout.Popup("Target", m_pathInfoTarget, m_pathInfoList);
+	if(m_config.pathInfoList.Count == 0){
+	    EditorGUILayout.BeginHorizontal();
+	    {	    
+		var style = new GUIStyle();
+		style.alignment   = TextAnchor.MiddleLeft;
+		style.fixedHeight = 32;
+		style.richText    = true;
+
+		GUILayout.Label(SystemIconManager.instance.GetIconTexture(SystemIcon.IconType.Warn),
+				GUILayout.Width(32));
+		GUILayout.Label("<color=#FF0000>Please Add Deploy Setting !</color>", style);
+	    }
+	    EditorGUILayout.EndHorizontal();
+	    
+	    GUILayout.Space(5);	
+	    GUILayout.Box(GUIContent.none, HrStyle.EditorLine, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
+	    GUILayout.Space(5);	    
+	    return;
+	}
 	
+	m_pathInfoTarget = EditorGUILayout.Popup("Target", m_pathInfoTarget, m_pathInfoList);
+
 	var info = m_config.pathInfoList[m_pathInfoTarget];
 	DrawSimpleLabelField("JsonDirPath : ", info.workspacePath);
 	DrawSimpleLabelField("S3 Path : ",     "s3://" + info.s3Bucket + info.s3Folder);
@@ -152,7 +172,7 @@ public class JsonableScriptableObjectInspector : Editor
 	GUILayout.Space(5);	
     }
 
-    protected void DrawSimpleLabelField(string label, string value,
+    protected void DrawSimpleLabelField(string label, string value = "",
 					float defaultLabelWidth = 80f)
     {
 	EditorGUILayout.BeginHorizontal();
